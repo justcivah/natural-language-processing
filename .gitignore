@@ -1,0 +1,13 @@
+*.xmpi
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.pdf
+*.synctex.gz
+*.toc
+*.xmpdata
+*.swp
+*.pyg
+*.bkp

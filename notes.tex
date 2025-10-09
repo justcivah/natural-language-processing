@@ -1,0 +1,457 @@
+\documentclass{scrartcl}
+
+\usepackage{style}
+\usepackage{parskip}
+\usepackage{amsmath}
+\usepackage{multirow}
+
+\title{Natural Language Processing}
+\author{Giovanni Novati}
+\date{A.Y. 2025/2026}
+\begin{document}
+	\maketitle
+	
+	\section{Introduction}
+	\subsection{The informative stratification of language}
+	Natural language is made of elements, where each one is the abstraction of another one.
+	The main elements are the following:
+	
+	\begin{itemize}
+		\item \textbf{Alphabet}: the set of symbols on which a whole language is built on.
+		\item \textbf{Word}: the smallest unit of meaning composed of one or more letters.
+		\item \textbf{Morphology}: words with the same meaning can change form depending on context.
+		\example{\quotes{to be}, \quotes{are}, \quotes{is}.
+		These are all different words with similar meaning, but that change based on the subject.}
+		\item \textbf{Parts of speech}: each word has different functions into a sentence, based on the context and the position.
+		\example{words can be nouns, verbs, prepositions, adjectives, etc.}
+		\item \textbf{Syntax}: is the logical dependence between words in a sentence.
+		\item \textbf{Semantics}: represents the meaning of a sentence.
+		\item \textbf{Pragmatic and speech acts}: understand the context and the speaker intentions.
+	\end{itemize}
+	
+	But what is the meaning?
+	It can be obtained from real world experiences or can be retrieved using other data or concepts, with no reference to the outside world.
+	The former method can be achieved using a \textit{base knowledge system}, built on concepts using databases like Wikidata or Conceptnet.
+	The problem with this method is that is almost impossible to encode the entirety of world knowledge into a machine, both in terms of completeness and correctness (as some data may become outdated).
+	The latter can be achieved by describing words through other words and sentences.
+	Associations between words can be obtained from precompiled lexical resources such as WordNet, or computed automatically from large corpora using methods like \textit{word embeddings}.
+	
+	It is difficult for a machine to understand the context and the speaker's intentions.
+	Humans often express hidden sentiments and sarcasm while interacting with each other.
+	This happens more frequently when speaking, but also in text.
+	
+	Word sense disambiguation: a word can have multiple and different meanings, or a single concept can be described by many different words.
+	\example{the concept of father can be described using the words \quotes{dad}, \quotes{daddy}, \quotes{papa}, etc.}
+	
+	One of the first chatbots, ELIZA, relied only on patter matching expressions. These patterns may seem \quotes{natural enough} the first times, but after a few interactions you can start seeing them.
+	Our main goal is building a model that can understand the context of a text without regular expressions.
+	When we (humans) start learning the language, we first learn from examples. Only once we have familiarity with the language we start polishing it by studying grammar rules to polish it. That's \textit{human learning}, and we want to adopt the same approach to computers using \textit{machine learning}.
+	
+	\section{Tokenization}
+	
+	Suppose we have a list of $m$ documents, and we want to split them into a list of \textit{meaningful} substrings of equal or different length.
+	These substrings are called \textit{tokens}, that are saved in structures called \textit{dictionaries} or \textit{bags of words}.
+	
+	A dictionary is a set of all the tokens extracted from the $m$ documents, while the bag of words contains all the tokens with their absolute frequency.
+	
+	\textbf{Type-token ratio}: is the number of unique tokens divided by the number of total tokens in the data.
+	It represents how much variety there is in the data.
+	
+	Given a set of $m$ documents and a dictionary size of $n$ computed on all $m$ documents, we can create a matrix of size $m \times n$ where each entry $x_{mn}$ represents the occurrences of the token $n$ in the document $m$.
+	This is called Document-Term Matrix (DTM).
+	
+	Using this matrix, we can compare document similarity by calculating distances between their feature vectors.
+	The underlying assumption is that similar documents will have feature vectors with comparable values, resulting in smaller distances.
+	
+	\subsection{Feature selection and sparsity}
+	
+	The more features we have, the more the space becomes sparse.
+	If the space is sparse, it means that the vectors representing the documents are sparse (with almost all values at zero, except a few).
+	This means that the vectors are orthogonal to each other, and we can't effectively compare them (the distance is almost the same).
+	
+	We have to choose what type of features we want to consider:
+	\begin{itemize}
+		\item \textbf{Characters}: we would have a 26-dimension space (matrix $m \times 26$). The matrix is small, and it will be dense.
+		\item \textbf{Documents}: there will be only one feature per document. The result matrix dimensions will be $m \times m$, and it will be sparse.
+		\item \textbf{Words}: is a good compromise for a feature.
+		\item \textbf{N-grams}: combination of $n$ consecutive words.
+		\item \textbf{Sentences}: higher-level features that may be too coarse.
+	\end{itemize}
+	
+	\subsection{N-grams and meaningfulness}
+	
+	N-grams (shingles): combination of $n$ consecutive words. N-grams give more context about single words. Furthermore, some words only have meaning if considered in combination.
+	\example{if we consider 2-grams, \quotes{New York} has a sense, but considering single words \quotes{New} and \quotes{York} does not give us the original meaning of the sentence.}
+	
+	But other times, some 2-grams may be useless.
+	\example{\quotes{the table}.}
+	
+	How can we keep the 2-grams \quotes{New York} but consider the words \quotes{the} and \quotes{table} separately?
+	
+	We can use a frequency-based approximation of an n-gram that considers the sum of all the probabilities of a 2-gram to be relevant together divided by all the possibilities these words could have been together.
+	
+	\begin{equation*}
+		\text{Meaningfulness of the 2-gram \quotes{New York}} = P(\text{new, york}) \times \log\left(\frac{P(\text{new, york})}{P(\text{new}) \times P(\text{york})}\right)
+	\end{equation*}
+	
+	So, to answer our question of \quotes{What feature we want to consider?} we have an answer: single words mixed with meaningful n-grams.
+	
+	\subsection{What is a word?}
+	
+	But now there's another problem: what is a word?
+	Is the word \quotes{play} and \quotes{play!} the same word or not?
+	Is \quotes{play} and \quotes{plays} the same word or not?
+	They give and transmit the same concept. So we want a token to be an approximation of a word.
+	What we want to consider changes based on our main goal.
+	
+	\subsection{Distance measures}
+	
+	There are lots of methods with which you can compute the distance (similarity) between two vectors.
+	A smaller distance indicates a higher similarity, while a larger distance indicates a lower similarity.
+	The most common ones are:
+	
+	\begin{itemize}
+		\item \textbf{Euclidean distance}: it's the length of a line segment between two points in Euclidean space.
+		Given an n-dimensional space, is computed using
+		
+		\begin{equation*}
+			D_e(\textbf{p}, \textbf{q}) = \sqrt{(p_1 - q_1)^2 + (p_2 - q_2)^2 + \ldots + (p_n - q_n)^2}
+		\end{equation*}
+		
+		\item \textbf{Cosine distance}: it's the cosine of the angle between the two non-zero vectors.
+		The cosine distance ($d_c$) can take values ranging from 0 up to 2, and is computed using the cosine similarity ($s_c$) which values range from -1 to 1.
+		Given an n-dimensional space, is computed by subtracting the cosine similarity from 1.
+		
+		\begin{equation*}
+			d_c(\textbf{p}, \textbf{q}) = 1 - s_c(\textbf{p}, \textbf{q})
+		\end{equation*}
+		
+		\begin{equation*}
+			s_c(p, q) = \frac{\textbf{p} \cdot \textbf{q}}{||\textbf{p}|| \, ||\textbf{q}||} = \frac{\sum_{i=1}^{n} p_i q_i}{\sqrt{\sum_{i=1}^{n} p_i^2} \sqrt{\sum_{i=1}^{n} q_i^2}}
+		\end{equation*}
+	\end{itemize}
+	
+	\subsection{Term frequency and document frequency}
+	
+	Bag of words: list with all the words and their relative frequency (number of occurrences divided by the number of total words).
+	This is called \textbf{term frequency (TF)}.
+	
+	Words with higher frequency are not always useful, while words with less frequency can be more informative.
+	If words with higher frequency are common in most of the documents, we can consider these words not useful for distinguishing between documents.
+	
+	We want to measure how specific a word is to a particular document.
+	The \textbf{document frequency (DF)} represents the number of documents a word appears in divided by the total number of documents.
+	\begin{equation*}
+		DF = \frac{|\{d: w \in \textbf{d}\}|}{|\textbf{d}|}
+	\end{equation*}
+	
+	But we want meaningful words to have a high value, and common words to have low values. So we use the \textbf{inverse document frequency (IDF)} function:
+	\begin{equation*}
+		IDF = \log\left(\frac{m}{1 + DF}\right)
+	\end{equation*}
+	
+	We use the logarithm to have a smoother curve and to reduce the distance between useful and less useful words.
+	
+	If we want to know how specific a word is in a certain document relative to the whole corpus (set of documents), we can use \textbf{TF-IDF}:
+	\begin{equation*}
+		TF\text{-}IDF = TF \times IDF
+	\end{equation*}
+	
+	\section{Tokenization approaches}
+	
+	Given a string of characters, we can first identify single words by splitting the string using spaces.
+	The text is then split into tokens.
+	This is text tokenization.
+	Then, different words may have (almost) the same meaning (e.g., \quotes{big}, \quotes{bigger}, \quotes{biggest}), so we want to normalize the tokens.
+	
+	\subsection{First approach: Heuristic-based}
+	
+	Each language has typical prefixes/suffixes, so we can use regular expressions to detect these parts of the word.
+	This approach is called \textbf{stemming}.
+	
+	We can use heuristic algorithms (that know the language grammar) to split word endings.
+	\example{the words \quotes{big}, \quotes{bigger} and \quotes{biggest}.
+		They are all related concepts, but are expressed using slightly different words.
+		If we create a token using the first three letters and consider the remaining letters as separate tokens, we have the tokens \quotes{big}, \quotes{ger} and \quotes{gest}.}
+	
+	\subsection{Second approach: Linguistics-based}
+	
+	We can apply machine learning to tokenize a text.
+	These tools are called \textbf{linguistic-based tokenizers}, and one example is spaCy, available in Python.
+	These models are trained on specific languages.
+	
+	Using spaCy (or other libraries), you can get multiple pieces of information about a single token:
+	
+	\begin{itemize}
+		\item \textbf{Text}: the token itself, as it was in the text.
+		\item \textbf{Lemma}: dictionary entry of that word. Considering the lemma instead of the token reduces the feature vector size.
+		\item \textbf{Pos/Tag}: identifies the part of speech (noun, verb, adjective)
+		\item \textbf{Dependency/Head}: establishes the dependencies between words. In the sentence \quotes{The cat eats the mouse}, \quotes{mouse} depends on \quotes{the} and \quotes{eats}, \quotes{eats} depends on \quotes{cat}, and \quotes{cat} depends on \quotes{the}.
+		\item \textbf{Alpha}: boolean that tells whether the token is alphanumeric.
+	\end{itemize}
+	
+	\textbf{Noun chunks}: multiple words representing a concept, that can be non-continuous in the original document.
+	This is computed using the \textit{dependency tree}.
+	
+	\textbf{Named entity recognition}: common names used in real world to represent objects or concepts.
+	\example{\quotes{Apple} can be categorized as a company, while 
+		\quotes{Italy} is recognized as a country.}
+	
+	To recap, the first approach only works using heuristics and its execution is very fast.
+	On the other hand, the second approach is a bit slower (it uses machine learning techniques) but it can better understand the meaning of the text, and contextualize words.
+	It is prone to errors.
+	
+	\subsection{Third approach: Learn-based}
+	
+	The learning-based approach, also called \textit{subword tokenization}, represents the state-of-the-art in tokenization for modern language models like BERT, GPT.
+	This approach addresses fundamental limitations of traditional word-based tokenization by learning optimal subword units directly from the training corpus.
+	
+	Traditional word-based tokenization suffers from several critical issues.
+	First, it creates enormous vocabularies (potentially millions of unique words), leading to sparse representations and computational inefficiency.
+	Second, it cannot handle out-of-vocabulary (OOV) words that weren't seen during training.
+	Third, it fails to capture morphological relationships between related words like \quotes{play}, \quotes{playing}, and \quotes{played}.
+	
+	Subword tokenization solves these problems by operating on the principle that frequently used words should remain as single tokens, while rare words should be decomposed into meaningful subword units.
+	For example, \quotes{annoyingly} might be decomposed into \quotes{annoying} and \quotes{ly}, where both components appear more frequently in the corpus while preserving the original meaning.
+	
+	This approach enables models to:
+	\begin{itemize}
+		\item Maintain reasonable vocabulary sizes (typically 30,000-50,000 tokens)
+		\item Handle any input text, including previously unseen words
+		\item Capture morphological patterns and linguistic structures
+		\item Achieve better performance on multilingual tasks
+	\end{itemize}
+	
+	\subsubsection{WordPiece}
+	
+	WordPiece is a subword-based tokenization algorithm developer by Google, and commonly used in transformer-based models like BERT.
+	It improves efficiency by balancing vocabulary size and representation power.
+	The goal of training is to construct an optimal vocabulary from raw text data, balancing vocabulary size with subword efficiency.
+	
+	\textbf{Training Algorithm:}
+	\begin{enumerate}
+		\item \textbf{Initialize dictionary}: the initial vocabulary contains all single Unicode characters plus special tokens like $[UNK]$.
+		\item \textbf{Compute frequency}: scan the training corpus and count the occurrence of every pairs of tokens (initially each char is seen as a token), by marking with a special character \# the tokens that are not the initial ones.
+		\item \textbf{Merge pairs}: merge the two most frequent pair and update the vocabulary and the corpus by substituting this sequence with a single token.
+		\item \textbf{Repeat}: repeat points 3 - 4 until the maximum dictionary size is reached.
+	\end{enumerate}
+	
+	This learning-based approach has become the foundation for all modern large language models, enabling them to achieve remarkable performance across diverse linguistic tasks while maintaining computational efficiency.
+	
+	\subsubsection{Byte Pair Encoding (BPE)}
+	
+	BPE, originally a data compression technique from 1994, was adapted for NLP and is now used in many models.
+	The algorithm works by iteratively merging the most frequent pairs of characters or subwords until reaching a desired vocabulary size.
+	This algorithm does not mark tokens that are not the initial one with a different character.
+	
+	\subsection{Limitations of bag of words representation}
+	
+	Despite this algorithms, there are still some limitation with tokenization:
+	
+	\begin{itemize}
+		\item Even with these tokenization methods, the vector space is mostly sparse. Most documents only use a small subset of the vocabulary, leading to vectors with many zero values.
+		\item If two tokens have a similar meaning but are represented in a different way, the two features will be orthogonal to each other. The machine will treat them as totally different words.
+		\example{The words \quotes{game} and \quotes{match} are similar, but are represented in a totally different way.}
+		\item Words with multiple meanings (polysemy) are treated as single tokens and context-dependent meaning variations cannot be captured in the token representation.
+		\item Sentences that use same words but in a different order will result in a identical feature vector, even though the meaning may be different. \example{\quotes{Mary loves John} and \quotes{John loves Mary} have different meanings but identical feature vectors.}
+	\end{itemize}
+	
+	\section{Classification}
+	
+	Given a corpus, we may want to assign one or more labels to each document, based on a set of feature; this is called a classification problem.
+	It can be modeled as a function that provides a probability distribution over the target given the features, such as
+	
+	\begin{equation*}
+		f : X \rightarrow \Delta_Y
+	\end{equation*}
+	
+	where $X$ denotes the features and $Y$ the labels.
+	So, given a single input $x \in X$, $f(x)$ returns a vector $p(x) \in  \Delta_Y$ such that
+	
+	\begin{equation*}
+		\textbf{p}(x) =
+		\begin{bmatrix}
+			p_1(x) \\
+			p_1(x) \\
+			\vdots \\
+			p_1(x) \\
+		\end{bmatrix}
+	\end{equation*}
+	
+	since the label vector is a probability distribution, we know that
+	
+	\begin{equation*}
+		\sum_{i = 1}^{|Y|}p_i(x) = 1 \quad \text{and that} \quad p_i(x) \geq 0 \ \forall i \in 1\ ...\ |Y|
+	\end{equation*}
+	
+	A classification problem can be subdivided into four main categories:
+	\begin{itemize}
+		\item \textbf{Binary partition}: each input data point can be assigned to one label only among two possible labels.
+		\example{A fake news detector or a spam filter.
+			In both examples you show or hide the content, there's no intermediate state or partial classification.}
+		\item \textbf{Soft binary classification}:  each input data point can be assigned to one or two labels among two possible labels. \example{Search engines work by comparing the relevance of different websites.
+			There's no hard partitioning (relevant/irrelevant), but the relevance of a certain content is given as probability (it is 65\% relevant and 35\% irrelevant).}
+		\item \textbf{Multi-class partition}: each input data point can be assigned to one lable only among many.
+		\example{A news article classifier that assigns each article to exactly one category such as Politics, Sports, Technology, Entertainment, etc.}
+		\item \textbf{Soft multi-label classification}: each input data point can be assigne to multiple labels among many.
+		\example{A research paper tagger that predicts the probability of belonging to various subjects like Machine Learning, Data Mining, Computer Vision, and Natural Language Processing.
+			A single paper about vision transformers could have high probabilities for both Computer Vision (92\%) and Natural Language Processing (85\%).}
+	\end{itemize}
+	
+	In the last example we can see that the probabilities of an article belonging to a specific topic do not add up to 1, like we saw in the multi-class partition.
+	That's because a soft multi-class classification problem can be modeled as a multiple binary classification problems (independent yes/no predictions).
+	Each label’s probability indicates the independent likelihood the item belongs to that category, so they do not need to sum to 1.
+	If we want that property, we can normalize it by applying the \textit{softmax} function.
+	
+	So, our goal is to transform the input feature vector of size $m$ into an output vector of size $n$, representing the probability distribution over all the labels.
+	We can achieve this transformation through matrix multiplication. Given an input vector of size $m$ and desired output of size $n$, we need a weight matrix \textbf{W} of size $m × n$. The computation follows
+	
+	\begin{equation*}
+		\begin{bmatrix}
+			i_1 \\
+			i_2 \\
+			\vdots \\
+			i_m \\
+		\end{bmatrix}
+		\cdot
+		\begin{bmatrix}
+			w_{11}	& w_{12}	& \dots		& w_{1m}\\
+			w_{21}	& w_{22}	& \dots		& w_{2m}\\
+			\vdots	& \vdots	& \ddots	& \vdots\\
+			w_{n1}	& w_{n2}	& \dots		& w_{nm}\\
+		\end{bmatrix}
+		=
+		\begin{bmatrix}
+			o_1 \\
+			o_2 \\
+			\vdots \\
+			o_n \\
+		\end{bmatrix}
+	\end{equation*}
+	
+	Each element $w_{ij}$ in the weight matrix represents the learned importance of feature $i$ for predicting label $j$.
+	By multiplying the input vector with the weight matrix, we get the final label vector.
+	In a more general form, the definition of a linear classifier is
+	
+	\begin{equation*}
+		x \textbf{W} = y
+	\end{equation*}
+	
+	When we apply a function $g$ to the linear output ()\example{A threashold function}), we get
+	
+	\begin{equation*}
+		g(x \textbf{W}) = y
+	\end{equation*}
+	
+	That structure is called a \textbf{neural network}.
+	Neural networks provide a flexible framework for building complex classifiers, though they are not the only method available.
+	Alternative approaches include more traditional classifiers like \textit{Naive Bayes}, \textit{Decision Trees}, etc.
+	
+	These \quotes{classic} classifiers often have the advantage of being inherently explainable - you can understand exactly why a particular input received a specific classification by examining the model's decision process.
+	In contrast, complex deep neural networks can be extremely difficult to interpret, making it challenging to understand the reasoning behind their predictions.
+	
+	\subsection{Cuisine classification example}
+	
+	Suppose we have $m$ recipes that contain a list of ingredients, and we want to classify these recipes on a set of $n$ cuisine types or ethnicities.
+	We can encode features (the ingredients) using term frequency, so for each recipe we will have a vector of zeros and ones indicating wether an ingredient was used or not.
+	We can then use the TF-IDF to discover if an ingredient is typical of a certain cuisine or is common in all of them (in this last case it won't tell us much about the cuisine type).
+	\example{\quotes{Salt} will be used in all cuisine, while \quotes{pizzoccheri} will be more typical of the italian cuisine}.
+	
+	\subsection{Neural Network Training}
+	
+	Initially, the weight matrix $\mathbf{W}$ (also denoted as $\boldsymbol{\Theta}$) used for matrix multiplication contains random values.
+	The training process involves the following iterative steps:
+	
+	\begin{enumerate}
+		\item \textbf{Forward pass}: Compute the output vector by multiplying the input vector with the current weight matrix.
+		\item \textbf{Error computation}: Calculate the difference between the predicted output and the expected output (ground truth).
+		\item \textbf{Gradient computation}: Determine the direction to adjust each parameter by computing the partial derivative of the loss function with respect to each parameter (\textit{gradient descent}).
+		\item \textbf{Parameter update}: Modify the weight values using the gradient and a \textit{learning rate} $\eta$ that controls the step size of updates.
+	\end{enumerate}
+	
+	To prevent excessive sensitivity to individual variations and improve convergence stability, parameters are not updated after every single input.
+	Instead, the process uses \textbf{batches}: the model processes $n$ inputs, averages the errors, and then updates the parameters once per batch.
+	
+	\subsubsection{Training monitoring}
+	
+	Determining when to stop training requires careful monitoring of both training and validation performance.
+	During training, we compute the \textbf{training loss} on the data used for parameter updates.
+	However, relying solely on training loss can lead to \textit{overfitting}, where the model memorizes the training data but fails to generalize to new examples.
+	
+	To detect overfitting, we evaluate the model on a separate \textbf{validation set} that was not used during training.
+	The goal is not to optimize performance on the test data, but to ensure the model can generalize to previously unseen examples.
+	
+	\subsection{Evaluation Metrics}
+	
+	The correct label for each example in our dataset is called the \textbf{ground truth}.
+	For binary classification problems, we can categorize predictions into four types:
+	
+	\begin{itemize}
+		\item \textbf{True Positive (TP)}: Correctly identified positive cases
+		\item \textbf{False Positive (FP)}: Incorrectly identified as positive (Type I error)
+		\item \textbf{True Negative (TN)}: Correctly identified negative cases
+		\item \textbf{False Negative (FN)}: Incorrectly identified as negative (Type II error)
+	\end{itemize}
+	
+	From these basic metrics, we derive several important evaluation measures:
+	
+	\begin{equation*}
+		\text{Precision} = \frac{TP}{TP + FP} \\[0.5em]
+	\end{equation*}
+	
+	\begin{equation*}
+		\text{Recall} = \frac{TP}{TP + FN} \\[0.5em]
+	\end{equation*}
+	
+	\begin{equation*}
+		\text{Accuracy} = \frac{TP + TN}{TP + FP + TN + FN}
+	\end{equation*}
+	
+	\textbf{High recall and low precision} means the model captures most positive cases but includes many false positives.
+	Many correct classifications are missed, but most predictions marked as positive are actually correct.
+	
+	\textbf{Low recall and high precision} means the model is conservative in making positive predictions.
+	When it does predict positive, it's usually correct, but it misses many actual positive cases.
+	
+	\subsubsection{Confusion Matrix}
+	
+	A \textbf{confusion matrix} is an $n \times n$ matrix (where $n$ is the number of classes) that shows the relationship between actual and predicted classifications.
+	Each row represents the actual class, while each column represents the predicted class.
+	The matrix reveals where the system gets \quotes{confused} between different classes.
+	
+	For a binary classification problem, the confusion matrix has the following structure:
+	
+	\begin{equation*}
+		\begin{array}{cc|cc}
+			& & \multicolumn{2}{c}{\textbf{Predicted}} \\
+			& & \text{Positive} & \text{Negative} \\
+			\hline
+			\multirow{2}{*}{\textbf{Ground truth}} & \text{Positive} & TP & FN \\
+			& \text{Negative} & FP & TN
+		\end{array}
+	\end{equation*}
+	
+	\subsection{Classification Challenges}
+	
+	Several challenges commonly arise in classification problems:
+	
+	\begin{itemize}
+		\item \textbf{Unbalanced datasets}: When some classes have significantly more examples than others, leading to biased models that favor the majority class.
+		\item \textbf{Feature selection}: Determining which features are most informative for classification while avoiding curse of dimensionality.
+		\item \textbf{Overfitting}: Models that perform well on training data but poorly on new, unseen data.
+		\item \textbf{Interpretability}: Understanding why a model makes specific predictions, especially important in sensitive applications.
+	\end{itemize}
+	
+	\subsection{Model Explainability}
+	
+	There are two main types of explanations in machine learning:
+	
+	\begin{itemize}
+		\item \textbf{Local explanation}: Understanding why a specific input received a particular classification. For simple neural networks, this can be achieved by examining the weight matrix $\mathbf{W}$, but becomes extremely difficult with complex deep networks.
+		\item \textbf{Global explanation}: Identifying the most relevant features for predicting each class across the entire dataset. This helps understand the model's general decision-making patterns.
+	\end{itemize}
+	
+	Traditional \quotes{classic} classifiers often provide built-in explainability, making them valuable in domains where understanding model decisions is crucial, such as medical diagnosis or legal applications.
+	
+	
+\end{document}
