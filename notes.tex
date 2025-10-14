@@ -357,7 +357,7 @@
 	We can then use the TF-IDF to discover if an ingredient is typical of a certain cuisine or is common in all of them (in this last case it won't tell us much about the cuisine type).
 	\example{\quotes{Salt} will be used in all cuisine, while \quotes{pizzoccheri} will be more typical of the italian cuisine}.
 	
-	\subsection{Neural Network Training}
+	\subsection{Neural network training}
 	
 	Initially, the weight matrix $\mathbf{W}$ (also denoted as $\boldsymbol{\Theta}$) used for matrix multiplication contains random values.
 	The training process involves the following iterative steps:
@@ -381,7 +381,7 @@
 	To detect overfitting, we evaluate the model on a separate \textbf{validation set} that was not used during training.
 	The goal is not to optimize performance on the test data, but to ensure the model can generalize to previously unseen examples.
 	
-	\subsection{Evaluation Metrics}
+	\subsection{Evaluation metrics}
 	
 	The correct label for each example in our dataset is called the \textbf{ground truth}.
 	For binary classification problems, we can categorize predictions into four types:
@@ -413,7 +413,7 @@
 	\textbf{Low recall and high precision} means the model is conservative in making positive predictions.
 	When it does predict positive, it's usually correct, but it misses many actual positive cases.
 	
-	\subsubsection{Confusion Matrix}
+	\subsubsection{Confusion matrix}
 	
 	A \textbf{confusion matrix} is an $n \times n$ matrix (where $n$ is the number of classes) that shows the relationship between actual and predicted classifications.
 	Each row represents the actual class, while each column represents the predicted class.
@@ -431,7 +431,7 @@
 		\end{array}
 	\end{equation*}
 	
-	\subsection{Classification Challenges}
+	\subsection{Classification challenges}
 	
 	Several challenges commonly arise in classification problems:
 	
@@ -442,7 +442,7 @@
 		\item \textbf{Interpretability}: Understanding why a model makes specific predictions, especially important in sensitive applications.
 	\end{itemize}
 	
-	\subsection{Model Explainability}
+	\subsection{Model explainability}
 	
 	There are two main types of explanations in machine learning:
 	
@@ -453,5 +453,91 @@
 	
 	Traditional \quotes{classic} classifiers often provide built-in explainability, making them valuable in domains where understanding model decisions is crucial, such as medical diagnosis or legal applications.
 	
+	\section{Statistical language models}
+	
+	Until now, for document classification, we have considered features without any regard to their order. However, the sequence of words carries crucial information about meaning and structure. Statistical language models aim to capture this sequential nature by computing the probability of word sequences.
+	
+	\subsection{Sequence probability estimation}
+	
+	Consider a sequence of words \(w_0, w_1, w_2, \ldots, w_n\). We want to measure the probability of this particular sequence occurring: \(P(w_0, w_1, w_2, \ldots, w_n)\).
+	
+	The simplest approach assumes independence between words:
+	\begin{equation*}
+		P(w_1, w_2, \ldots, w_n) = \prod_{i=1}^{n} P(w_i)
+	\end{equation*}
+	
+	where the probability of a single word \(w\) in a corpus \(D\) of length \(N\) is:
+	\begin{equation*}
+		P(w) = \frac{\text{count}(w)}{\sum_{i=1}^{N} \text{count}(w_i)}
+	\end{equation*}
+	
+	However, this independence assumption ignores the contextual relationships between words, which are fundamental to natural language.
+	
+	\subsection{Conditional probability and language models}
+	
+	A more sophisticated approach uses conditional probability to model word dependencies. Given a starting word \(w_0\), we can compute the probability of the next word conditioned on the previous context:
+	
+	\begin{equation*}
+		P(w_1 | w_0) = \frac{\text{count}(w_0, w_1)}{\text{count}(w_0)}
+	\end{equation*}
+	
+	This extends to longer sequences using the chain rule of probability:
+	\begin{equation*}
+		P(w_0, w_1, \ldots, w_n) = P(w_0) \prod_{i=1}^{n} P(w_i | w_0, w_1, \ldots, w_{i-1})
+	\end{equation*}
+	
+	This formulation defines a \textbf{statistical language model}: a probability distribution over sequences of words that captures the likelihood of different word combinations in natural language.
+	
+	To handle sequence boundaries, we introduce special tokens [START] and [END] at the beginning and end of each sequence. This allows the model to learn appropriate sentence beginnings and endings.
+	
+	\subsection{Training and text generation}
+	
+	The training process involves analyzing the corpus to compute all conditional probabilities. The model memorizes word sequences and their frequencies, storing the probability of each possible next word given various contexts.
+	
+	For text generation, we can employ different strategies:
+	
+	\begin{itemize}
+		\item \textbf{Greedy selection}: always choose the highest probability next word. This produces deterministic but potentially repetitive output.
+		\item \textbf{Probabilistic sampling}: sample words according to their computed probabilities. This introduces variability but may produce less coherent text.
+		\item \textbf{Top-k sampling}: consider only the \(k\) most probable next words, renormalize their probabilities, and sample from this reduced set. This balances coherence and diversity.
+	\end{itemize}
+	
+	\subsection{Classification with language models}
+	
+	Language models can serve as document classifiers by training separate models for each class. Given a document to classify:
+	
+	\begin{enumerate}
+		\item Train one language model per class using documents from that class
+		\item Compute the probability of the test document under each class-specific model
+		\item Assign the document to the class with the highest probability
+	\end{enumerate}
+	
+	This approach captures sequential information that bag-of-words methods miss, potentially improving classification accuracy for tasks where word order matters.
+	
+	\subsection{Limitations and challenges}
+	
+	Statistical language models face several fundamental problems:
+	
+	\begin{itemize}
+		\item \textbf{Exponential memory growth}: storing all possible sequences and their frequencies requires exponentially increasing memory as sequence length grows.
+		\item \textbf{Data sparsity}: long sequences rarely appear in training corpora, making probability estimation unreliable for extended contexts.
+		\item \textbf{Predictability}: as sequences grow longer, the model tends to generate increasingly standard and predictable continuations.
+	\end{itemize}
+	
+	\subsection{Solutions and extensions}
+	
+	Two primary approaches address these limitations:
+	
+	\textbf{Markov language models}: instead of conditioning on the entire preceding sequence, limit the context to a fixed window of the last \(k\) words (typically \(k = 2\) or \(k = 3\)). This reduces memory requirements and improves probability estimation reliability. However, it sacrifices long-term dependencies, potentially making the end of generated sequences unrelated to their beginnings.
+	
+	The complete sequence probability under a Markov language model becomes:
+	
+	\begin{equation}
+		P(w_1, w_2, \ldots, w_n) = \prod_{i=1}^{n} P(w_i | w_{i-k}, \ldots, w_{i-1})
+	\end{equation}
+	
+	\textbf{Neural language models}: use neural networks to learn distributed representations of words and contexts, enabling better generalization and handling of longer dependencies. These models can capture complex patterns while maintaining computational tractability.
+	
+	Modern language models combine the probabilistic foundations of statistical models with the representational power of neural networks, leading to the sophisticated systems used in contemporary natural language processing applications.
 	
 \end{document}
