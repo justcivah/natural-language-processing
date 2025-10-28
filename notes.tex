@@ -540,4 +540,155 @@
 	
 	Modern language models combine the probabilistic foundations of statistical models with the representational power of neural networks, leading to the sophisticated systems used in contemporary natural language processing applications.
 	
+	\section{Neural language models}
+	
+	Modern language models leverage neural networks to overcome the limitations of statistical approaches. Instead of simply storing word sequences and their frequencies, neural networks can learn distributed representations that capture semantic relationships between words.
+	
+	\subsection{Neural word prediction approaches}
+	
+	Using neural networks, we can predict words in different contexts through three main approaches:
+	
+	\subsubsection{Next word prediction}
+	In this approach, we predict the next word given the previous words in a specific sequential order. The model processes words from left to right, maintaining the temporal structure of language.
+	\example{Given the sequence \quotes{The pasta at the}, the model predicts \quotes{restaurant} as the most likely next word.}
+	
+	\subsubsection{Continuous Bag of Words (CBOW)}
+	CBOW predicts a target word given its surrounding context words, without considering their order. We use a sliding window approach where the target word is at the center.
+	\example{Given the sentence \quotes{The pasta at the restaurant was good today}, to predict \quotes{restaurant}, we may want to use a window of size 5. In this case the context words are \quotes{pasta, at, was, good} and we want to predict the central word \quotes{restaurant}.}
+	
+	The sliding window moves through the entire sentence, and for each position, we predict the central word based on its surrounding context.
+	
+	\subsubsection{Skip-gram}
+	Skip-gram works in the opposite direction: given a single word, we predict its surrounding context words. This approach learns which words are likely to appear together.
+	\example{Given the word \quotes{restaurant}, the model should predict the context words \quotes{at}, \quotes{the}, \quotes{was}, \quotes{good}.}
+	
+	\subsection{Word2Vec architecture}
+	
+	Let's examine the neural network architecture for the skip-gram model, which forms the foundation of Word2Vec.
+	
+	The network structure consists of:
+	\begin{itemize}
+		\item \textbf{Input layer}: a one-hot encoded vector representing the entire dictionary, where only one position is set to 1 (the input word) and all others are 0.
+		\item \textbf{Hidden layer}: a smaller dense layer that compresses the input representation.
+		\item \textbf{Output layer}: a vector the size of the dictionary representing the probability distribution over all possible context words.
+	\end{itemize}
+	
+	The key insight is that the hidden layer is deliberately smaller than both input and output layers. This compression forces the network to learn meaningful representations, as it must encode the essential information about each word in a reduced dimensional space.
+	
+	During training, the same input word will appear with different context words across different training examples. The network learns to associate words that frequently appear together, building rich semantic relationships.
+	
+	The output layer produces a probability distribution over the entire vocabulary, making this a \textbf{classification problem}. We can either select the word with the highest probability or sample from the top-k most probable context words.
+	
+	This implementation is equivalent to a 1-gram Markov Language Model, but with learned distributed representations instead of simple frequency counts.
+	
+	\subsection{Word embeddings}
+	
+	The hidden layer in Word2Vec produces what we call \textbf{word embeddings}: dense vector representations of words that capture semantic meaning. Where one-hot encoding represents every word as an orthogonal vector in a high-dimensional space, embeddings represent words in a lower-dimensional space where geometric relationships encode meaning.
+	
+	Words with similar meanings will have similar vector representations in this embedding space. In the learned vector space:
+	\begin{itemize}
+		\item \textbf{Similar words} are represented by vectors that are close to each other (they are not orthogonal).
+		\item \textbf{Dissimilar words} are represented by vectors that are far apart.
+		\item \textbf{Semantic relationships can be captured through vector arithmetic.} The structure of the embedding space allows for meaningful mathematical operations on word vectors. This works because the training process organizes words such that directions in the vector space correspond to abstract semantic concepts (e.g., gender, tense, or royalty).
+		\begin{itemize}
+			\item \textbf{Analogy and relationships (addition/subtraction):} we can add and subtract vectors to navigate this semantic space and solve analogy tasks. The most famous example is:
+			\begin{equation*}
+				\text{vec}(\text{\quotes{King}}) - \text{vec}(\text{\quotes{Man}}) + \text{vec}(\text{\quotes{Woman}}) \approx \text{vec}(\text{\quotes{Queen}})
+			\end{equation*}
+			In this operation, subtracting the \quotes{Man} vector from the \quotes{King} vector isolates the abstract concept of \quotes{royalty}. Adding the \quotes{Woman} vector then applies this concept to a female context, resulting in a vector that is geometrically close to that of \quotes{Queen}.
+			
+			\item \textbf{Compositional meaning (averaging):} we can average the vectors of multiple words to get a single vector representing the combined meaning of a phrase or sentence. For example, averaging the vectors for \quotes{boat}, \quotes{water}, and \quotes{fish} would produce a new vector that captures the general concept of \quotes{fishing} or \quotes{boating}. This technique is useful for document classification or creating representations for larger chunks of text from their constituent words.
+		\end{itemize}
+	\end{itemize}
+	
+	This distributed representation solves many limitations of bag-of-words approaches. The model can generalize to unseen word combinations by leveraging learned semantic similarities, and rich relationships between words can be discovered and utilized. Using a distance metric like \textbf{cosine similarity}, we can measure how close two concepts are. We can also cluster the vectors in this space to discover abstract concepts automatically.
+	
+	\subsubsection{Analyzing semantic change across corpora}
+	
+	Word embeddings can be used to track shifts in word meaning over time (diachronic analysis). For example, the word \quotes{portal} has a different primary meaning today (related to the web) than it did a century ago. There are several ways to compute this change:
+	
+	\begin{itemize}
+		\item \textbf{Option 1 (Independent models with alignment)}: train two separate Word2Vec models, one on each corpus (e.g., a historical one and a modern one). Because the vector spaces are initialized randomly, they are not directly comparable. One must be translated/rotated to align with the other before comparing the vectors for a specific word.
+		\item \textbf{Option 2 (Context comparison)}: train two separate models. For a given word, input it into both models and compare the lists of predicted context words. The differences in the context lists reveal the shift in how the word is used.
+		\item \textbf{Option 3 (Finetuning a shared model)}: train a single model on both corpora combined. Then, create two copies of this model and finetune one on the historical corpus and the other on the modern one. This provides a common starting point, allowing for direct vector comparison (e.g., with cosine distance) to quantify the semantic shift. This method is most effective when the word's frequency is not drastically different between the two corpora.
+	\end{itemize}
+	
+	\section{Recurrent Neural Networks (RNNs)}
+	
+	While Word2Vec captures relationships between words, it operates on a local context and is fundamentally a bag-of-words approach. It does not inherently understand the order of words, which is critical for understanding language. To model sequences, we turn to \textbf{Recurrent Neural Networks (RNNs)}.
+	
+	Not all sequences benefit from sequential analysis. If elements are independent (e.g., a series of coin tosses), a bag-of-words approach is sufficient. However, in natural language, there are often long-term dependencies where early words in a sequence are crucial for understanding later parts. RNNs are designed to learn from the entire sequence.
+	
+	Sequence learning problems can be categorized as:
+	\begin{itemize}
+		\item \textbf{Sequence-to-vector (seq2vec)}: an input sequence is mapped to a single output vector (e.g., sentiment analysis of a sentence).
+		\item \textbf{Vector-to-sequence (vec2seq)}: a single input vector is used to generate an output sequence (e.g., image captioning).
+		\item \textbf{Sequence-to-sequence (seq2seq)}: an input sequence is mapped to an output sequence (e.g., machine translation).
+	\end{itemize}
+	
+	\subsection{The basic RNN model}
+	
+	A naive approach to sequence processing might be to apply a standard neural network (like Word2Vec) to each token in parallel. However, this fails because each output token would be generated independently, without awareness of its context in the sequence.
+	
+	RNNs solve this by introducing a \textbf{recurrent} connection. At each step \(t\), the network's output depends on two inputs: the current token \(x_t\) and the hidden state from the previous step, \(h_{t-1}\). This hidden state acts as the network's memory, carrying information from all previous steps.
+	
+	The hidden state at time \(t\) is computed as follows:
+	\begin{equation*}
+		h_t = g(\Theta_{hh}h_{t-1} + \Theta_{xh}x_t)
+	\end{equation*}
+	
+	The final output at that step, \(y_t\), is then typically computed from the hidden state:
+	\begin{equation*}
+		y_t = g'(\Theta_{hy}h_t)
+	\end{equation*}
+	
+	This requires three sets of learned parameters: weights for the hidden-to-hidden connection (\(\Theta_{hh}\)), input-to-hidden connection (\(\Theta_{xh}\)), and hidden-to-output connection (\(\Theta_{hy}\)). This sequential dependency means the process is inherently not parallelizable.
+	
+	\subsection{Training and challenges}
+	
+	RNNs are trained by unrolling the network through time for a full sequence (or batch of sequences). The error is computed at the end, and gradients are backpropagated through all the time steps to update the weights. This process introduces several challenges:
+	
+	\begin{itemize}
+		\item \textbf{Vanishing or exploding gradients}: during backpropagation, the gradients are repeatedly multiplied by the recurrent weight matrix. If the values are small, the gradient can shrink to zero (vanish), preventing the network from learning long-term dependencies. If they are large, the gradient can grow exponentially (explode), destabilizing training.
+		\item \textbf{Recency bias}: the network's state is often most influenced by recent inputs. The \quotes{memory} of earlier tokens in the sequence fades over time.
+	\end{itemize}
+	
+	To address these issues, more advanced architectures were developed, such as \textbf{Long Short-Term Memory (LSTM)} and \textbf{Gated Recurrent Units (GRU)}. These models introduce gating mechanisms—learnable parameters that control whether to keep, discard, or update information in the hidden state. For instance, a gate might learn to ignore an uninformative word like \quotes{the} and preserve the memory of a more meaningful word from earlier in the sequence.
+	
+	\subsection{Encoder-decoder architecture}
+	
+	A powerful application of RNNs is the \textbf{encoder-decoder} architecture, which is fundamental to seq2seq tasks like machine translation.
+	
+	\begin{itemize}
+		\item \textbf{Encoder}: an RNN reads the entire input sequence token by token. Its final hidden state is a vector that embeds the meaning of the whole sequence, often called a \quotes{context vector} or \quotes{thought vector}. Basically it tries to predict the same input sequence, shifted by one character.
+		\item \textbf{Decoder}: another RNN is initialized with the encoder's context vector. It then generates an output sequence token by token. At each step, its input is the previously generated token and its own hidden state, allowing it to generate a coherent sequence based on the input's meaning.
+	\end{itemize}
+	
+	A key advantage of this architecture is that the input and output sequences can have different lengths, which is essential for tasks like translation.
+	
+	\subsection{Generating output sequences}
+	
+	The decoder outputs a probability distribution over the entire vocabulary at each step. To construct the final sequence, we need a selection strategy:
+	
+	\begin{itemize}
+		\item \textbf{Greedy search}: at each step, simply choose the word with the highest probability. This is fast but may not lead to the optimal overall sequence.
+		\item \textbf{Beam search}: at each step, keep track of the \(n\) most probable partial sequences (the \quotes{beam}). In the next step, expand each of these sequences (not just tokens!) and again keep only the top \(n\) overall. This is more computationally expensive but explores a larger search space and often produces better results.
+	\end{itemize}
+
+	\subsection{Attention mechanism}
+	
+	A limitation of the basic encoder-decoder model is that the entire meaning of the input sequence must be compressed into a single, fixed-size context vector. This is a bottleneck, especially for long sequences, as the memory of early tokens can be lost.
+	
+	The \textbf{attention mechanism} solves this. Instead of just using the encoder's final hidden state, the decoder is given access to \textit{all} of the encoder's hidden states from every time step. At each step of generating an output token, the decoder calculates a set of \quotes{attention scores}, a weighted average over the encoder's hidden states. These scores determine which input tokens are most relevant for generating the current output token.
+	
+	\example{If answering \quotes{Is Maria going to the sea?} to \quotes{Yes, she said she wanted to go}, when the decoder generates the word \quotes{she}, the attention mechanism would likely place a high weight on the input token \quotes{Maria}. When generating \quotes{go}, it would attend more to \quotes{going}.}
+	
+	The attention weights are recalculated for every token the decoder generates, allowing the focus to shift dynamically. There are two main types of attention:
+	\begin{itemize}
+		\item \textbf{Cross-attention}: maps the importance of each input token to the current output token.
+		\item \textbf{Self-attention}: maps the importance of tokens within the same sequence (either input or output) to each other, capturing internal dependencies.
+	\end{itemize}
+	
+	Attention scores are themselves learned during training, typically by multiplying matrices of the hidden state vectors. This allows the model to learn complex alignments between input and output sequences. A common method for evaluating the quality of generated sequences is the \textbf{BLEU score}, which compares n-grams from the predicted and ground-truth sequences.
+	
 \end{document}
