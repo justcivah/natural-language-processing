@@ -1,3 +1,4 @@
+# latex
 *.xmpi
 *.aux
 *.bbl
@@ -10,3 +11,26 @@
 *.swp
 *.pyg
 *.bkp
+
+# python
+**/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.mypy_cache/
+.pytype/
+.env
+.venv
+env/
+venv/
+ENV/
+
+# vscode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# project
+**/raw.csv
