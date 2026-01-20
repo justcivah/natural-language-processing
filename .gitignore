@@ -34,3 +34,9 @@ ENV/
 
 # project
 **/raw.csv
+*.json
+*.model
+*.pt
+*pth
+*.safetensors
+*.bin
