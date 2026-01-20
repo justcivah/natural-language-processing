@@ -19,6 +19,7 @@ class StudentTrainer:
             train_epochs=3,
             learning_rate=2e-5,
             weight_decay=0.01,
+            test_train=False,
         ):
 
         self.train_dataset_path = train_dataset_path
@@ -31,6 +32,7 @@ class StudentTrainer:
         self.train_epochs = train_epochs
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
+        self.test_train = test_train
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.student_model_name)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(self.student_model_name, dtype=self.dtype)
@@ -44,9 +46,10 @@ class StudentTrainer:
         labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
         labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
 
-        score = sacrebleu.corpus_chrf(preds, [labels], word_order=2)
+        chrf_score = sacrebleu.corpus_chrf(preds, [labels], word_order=2).score
+        bleu_score = sacrebleu.corpus_bleu(preds, [labels]).score
 
-        return {'chrfpp': score.score}
+        return {'chrfpp': chrf_score, 'bleu': bleu_score}
     
 
     def preprocess_function(self, examples):
@@ -78,7 +81,9 @@ class StudentTrainer:
         model.eval()
 
         test_dataset = load_dataset('csv', data_files=test_dataset_path)['train']
-        test_dataset = test_dataset.select(range(25))
+
+        if self.test_train:
+            test_dataset = test_dataset.select(range(25))
 
         predictions = []
         for i in range(0, len(test_dataset), batch_size):
@@ -115,7 +120,7 @@ class StudentTrainer:
             merged[epoch].update(log)
 
         with open(training_losses_output_path, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=["epoch", "step", "loss", "eval_loss", "eval_chrfpp"])
+            writer = csv.DictWriter(f, fieldnames=["epoch", "step", "loss", "eval_loss", "eval_chrfpp", "eval_bleu"])
             writer.writeheader()
 
             for epoch in sorted(merged):
@@ -125,6 +130,7 @@ class StudentTrainer:
                     "loss": merged[epoch].get("loss"),
                     "eval_loss": merged[epoch].get("eval_loss"),
                     "eval_chrfpp": merged[epoch].get("eval_chrfpp"),
+                    "eval_bleu": merged[epoch].get("eval_bleu"),
                 })
 
 
@@ -140,8 +146,9 @@ class StudentTrainer:
         train_dataset = load_dataset('csv', data_files=self.train_dataset_path)['train']
         valid_dataset = load_dataset('csv', data_files=self.valid_dataset_path)['train']
 
-        train_dataset = train_dataset.select(range(100))
-        valid_dataset = valid_dataset.select(range(25))
+        if self.test_train:
+            train_dataset = train_dataset.select(range(100))
+            valid_dataset = valid_dataset.select(range(25))
 
         print(f'Number of samples in training: {len(train_dataset)}')
         print(f'Number of samples in validation: {len(valid_dataset)}')
@@ -202,7 +209,7 @@ class StudentTrainer:
 
         trainer.train()
 
-        best_model_output_path = self.train_output_path + 'best_model/'
+        best_model_output_path = self.train_output_path + 'best-model/'
         trainer.save_model(best_model_output_path)
         self.tokenizer.save_pretrained(best_model_output_path)
         print('Model saved to ' + best_model_output_path)
