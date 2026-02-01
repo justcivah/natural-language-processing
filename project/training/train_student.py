@@ -35,12 +35,14 @@ class StudentTrainer:
         self.test_train = test_train
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.student_model_name)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(self.student_model_name, dtype=self.dtype)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(self.student_model_name)
         self.model.to(self.device)
 
 
     def compute_metrics(self, eval_preds):
         preds, labels = eval_preds
+
+        preds = np.where(preds != -100, preds, self.tokenizer.pad_token_id)
         preds = self.tokenizer.batch_decode(preds, skip_special_tokens=True)
 
         labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
@@ -57,8 +59,8 @@ class StudentTrainer:
             targets = [ex for ex in examples['italian']]
             
             # tokenize inputs and targets
-            model_inputs = self.tokenizer(inputs, max_length=128, truncation=True)
-            labels = self.tokenizer(targets, max_length=128, truncation=True)
+            model_inputs = self.tokenizer(inputs, max_length=128, truncation=True, padding='max_length')
+            labels = self.tokenizer(text_target=targets, max_length=160, truncation=True, padding='max_length')
 
             model_inputs['labels'] = labels['input_ids']
             return model_inputs
@@ -71,7 +73,7 @@ class StudentTrainer:
         output_path,
         batch_size=32,
         max_length=192,
-        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
     ):
         print('Computing predictions on test dataset ' + test_dataset_path)
 
@@ -98,7 +100,7 @@ class StudentTrainer:
             decoded = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
             predictions.extend(decoded)
 
-        with open(output_path, "w", newline="") as f:
+        with open(output_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             for pred in predictions:
                 writer.writerow([pred])
@@ -119,7 +121,7 @@ class StudentTrainer:
 
             merged[epoch].update(log)
 
-        with open(training_losses_output_path, "w", newline="") as f:
+        with open(training_losses_output_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=["epoch", "step", "loss", "eval_loss", "eval_chrfpp", "eval_bleu"])
             writer.writeheader()
 
@@ -137,7 +139,7 @@ class StudentTrainer:
     def train_student(self):
         # model and tokenizer
         print(f'Model on device: {self.model.device}')
-        print(f'Model using dtype: {self.model.dtype}')
+        print(f'Model training using dtype: {self.model.dtype}')
 
 
         # dataset
@@ -191,6 +193,8 @@ class StudentTrainer:
             predict_with_generate=True,
             dataloader_pin_memory=torch.cuda.is_available(),
             greater_is_better=True,
+            fp16=(self.dtype == torch.float16),
+            bf16=(self.dtype == torch.bfloat16),
         )
 
         trainer = Seq2SeqTrainer(
@@ -217,3 +221,5 @@ class StudentTrainer:
         training_losses_output_path = self.train_output_path + 'losses.csv'
         self.save_training_losses(trainer, training_losses_output_path)
         print('Training losses saved to ' + training_losses_output_path)
+
+        
