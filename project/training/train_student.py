@@ -3,7 +3,6 @@ from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, Seq2SeqTrainer
 import sacrebleu
 import numpy as np
-import os
 import csv
 
 class StudentTrainer:
