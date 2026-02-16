@@ -1,0 +1,190 @@
+%Version 3.1 December 2024
+% See section 11 of the User Manual for version history
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                                                 %%
+%% Please do not use \input{...} to include other tex files.       %%
+%% Submit your LaTeX manuscript as one .tex document.              %%
+%%                                                                 %%
+%% All additional figures and files should be attached             %%
+%% separately and not embedded in the \TeX\ document itself.       %%
+%%                                                                 %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%\documentclass[referee,sn-basic]{sn-jnl}% referee option is meant for double line spacing
+
+%%=======================================================%%
+%% to print line numbers in the margin use lineno option %%
+%%=======================================================%%
+
+%%\documentclass[lineno,pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+
+%%=========================================================================================%%
+%% the documentclass is set to pdflatex as default. You can delete it if not appropriate.  %%
+%%=========================================================================================%%
+
+%%\documentclass[sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+
+%%Note: the following reference styles support Namedate and Numbered referencing. By default the style follows the most common style. To switch between the options you can add or remove “Numbered” in the optional parenthesis. 
+%%The option is available for: sn-basic.bst, sn-chicago.bst%  
+ 
+%%\documentclass[pdflatex,sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
+%%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}% Math and Physical Sciences Numbered Reference Style
+%%\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
+%%\documentclass[pdflatex,sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
+%%\documentclass[pdflatex,sn-vancouver-num]{sn-jnl}% Vancouver Numbered Reference Style
+%%\documentclass[pdflatex,sn-vancouver-ay]{sn-jnl}% Vancouver Author Year Reference Style
+%%\documentclass[pdflatex,sn-apa]{sn-jnl}% APA Reference Style
+%%\documentclass[pdflatex,sn-chicago]{sn-jnl}% Chicago-based Humanities Reference Style
+
+%%%% Standard Packages
+%%<additional latex packages if required can be included here>
+
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{amsmath,amssymb,amsfonts}%
+\usepackage{amsthm}%
+\usepackage{mathrsfs}%
+\usepackage[title]{appendix}%
+\usepackage{xcolor}%
+\usepackage{textcomp}%
+\usepackage{manyfoot}%
+\usepackage{booktabs}%
+\usepackage{algorithm}%
+\usepackage{algorithmicx}%
+\usepackage{algpseudocode}%
+\usepackage{listings}%
+\setlength{\parindent}{0pt}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black}
+%%%%
+
+%%%%%=============================================================================%%%%
+%%%%  Remarks: This template is provided to aid authors with the preparation
+%%%%  of original research articles intended for submission to journals published 
+%%%%  by Springer Nature. The guidance has been prepared in partnership with 
+%%%%  production teams to conform to Springer Nature technical requirements. 
+%%%%  Editorial and presentation requirements differ among journal portfolios and 
+%%%%  research disciplines. You may find sections in this template are irrelevant 
+%%%%  to your work and are empowered to omit any such section if allowed by the 
+%%%%  journal you intend to submit to. The submission guidelines and policies 
+%%%%  of the journal take precedence. A detailed User Manual is available in the 
+%%%%  template package for technical guidance.
+%%%%%=============================================================================%%%%
+
+%% as per the requirement new theorem styles can be included as shown below
+\theoremstyle{thmstyleone}%
+\newtheorem{theorem}{Theorem}%  meant for continuous numbers
+%%\newtheorem{theorem}{Theorem}[section]% meant for sectionwise numbers
+%% optional argument [theorem] produces theorem numbering sequence instead of independent numbers for Proposition
+\newtheorem{proposition}[theorem]{Proposition}% 
+%%\newtheorem{proposition}{Proposition}% to get separate numbers for theorem and proposition etc.
+
+\theoremstyle{thmstyletwo}%
+\newtheorem{example}{Example}%
+\newtheorem{remark}{Remark}%
+
+\theoremstyle{thmstylethree}%
+\newtheorem{definition}{Definition}%
+
+\raggedbottom
+%%\unnumbered% uncomment this for unnumbered level heads
+
+\begin{document}
+
+\title[Article Title]{Domain shift in distilled T5-based models for language translation tasks}
+
+%%=============================================================%%
+%% GivenName	-> \fnm{Joergen W.}
+%% Particle	-> \spfx{van der} -> surname prefix
+%% FamilyName	-> \sur{Ploeg}
+%% Suffix	-> \sfx{IV}
+%% \author*[1,2]{\fnm{Joergen W.} \spfx{van der} \sur{Ploeg} 
+%%  \sfx{IV}}\email{iauthor@gmail.com}
+%%=============================================================%%
+
+\author{\fnm{Giovanni} \sur{Novati}}
+
+\affil{\orgdiv{Computer Science Master's Course}, \orgname{Universit\'a degli Studi di Milano}}
+
+%%==================================%%
+%% Sample for unstructured abstract %%
+%%==================================%%
+
+\abstract{The abstract serves both as a general introduction to the topic and as a brief, non-technical summary of the main results and their implications. Authors are advised to check the author instructions for the journal they are submitting to for word limits and if structural elements like subheadings, citations, or equations are permitted.}
+
+%%================================%%
+%% Sample for structured abstract %%
+%%================================%%
+
+% \abstract{\textbf{Purpose:} The abstract serves both as a general introduction to the topic and as a brief, non-technical summary of the main results and their implications. The abstract must not include subheadings (unless expressly permitted in the journal's Instructions to Authors), equations or citations. As a guide the abstract should not exceed 200 words. Most journals do not set a hard limit however authors are advised to check the author instructions for the journal they are submitting to.
+	
+\keywords{distillation, domain shift, language translation, t5, mt5}
+
+\maketitle
+\setlength{\parskip}{1em}
+
+\section{Introduction}\label{sec1}
+
+In recent years, more and more cumbersome LLMs have come to life in the AI race led by OpenAI and joined by all other competitors and big techs like Google, Anthropic, and Meta, just to say some. These companies have created models with billions if not trillions of parameters \cite{abacha2025medec}, and are general purpose, which means they are capable of doing a wide range or tasks such as natural language understanding and generation, decision making and reasoning \cite{ye2025llms4allreviewlargelanguage}.
+
+The main downside of these models is also their main advantage: the size. Running inference requires expensive hardware in order to load all parameters into dedicated GPU memory. Moreover, if we want to perform a task that only uses a subset of the model capabilities, all the parameters are still active, leading to a waste of memory and computational power.
+
+In the case we only want to perform a certain task, it might be useful to condense a larger model into a smaller one, specialized on that specific task while preserving comparable performance. This process is commonly known ad distillation \cite{hinton2015distilling}, and consists in transferring knowledge from a teacher model into a smaller student model.
+
+A limitation arises when the teacher model we want to use is proprietary, and internal parameters or output logits are not accessible. Using a black-box makes the distillation process more difficult, and in those scenarios alternatives strategies must be considered. One of them is training the student using only teacher's predictions; in this way we are still able to train the smaller model, but a reduction in performance is expected compared to full logits distillation \cite{yang2025survey}.
+
+In this paper, I investigate the distillation of task-specific student models from a GPT-5 Mini teacher using only its output predictions. I test two different student architectures across multiple parameter counts in order to assess their performance under domain shift. The models are trained on English-to-Italian translation and evaluated using BLEU and chrF++ metrics to measure both in-domain and out-of-domain effectiveness.
+
+\section{Methodology}\label{sec2}
+
+\subsection{Task}\label{sec2.1}
+
+First, let's define the task of interest. I wanted to train the model on something useful and challenging, in order to stress the student and understand its limitations. I opted for a translation task, specifically English to Italian, since translating into morphologically richer languages is a more difficult task \cite{chahuneau2013translating} compared to the opposite. Italian is a more complex language as it has more verb tenses and information like gender and number is embedded into words. These elements are not always present into English sentences and must be inferred based on the context.
+
+\subsection{Datasets}\label{sec2.2}
+
+After that, I needed to define two domains used to train and evaluate the students. Dataset $A$ \cite{charles_kelly_2020} contains 175.622 couples of English sentences with their related French translation. These sentences cover everyday life situations, with an average length of 42 characters. The second one, Dataset $B$ \cite{agentlans2023highquality}, contains 1.534.699 english sentences with an average length of 133 characters, and are related to educational and academic contexts. Note that the author of the latter one says that the dataset may introduce some biases, like a more formal writing style. Table~\ref{tab:dataset_examples} shows examples from both datasets.
+
+\begin{table}[h]
+	\centering
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabular}{p{0.15\textwidth} p{0.75\textwidth}}
+		\hline
+		\textbf{Source} & \textbf{Example sentences} \\
+		\hline
+		Dataset A	& I'll get something to drink for both of you. \\
+					& I have to do my best. \\
+					& I'm going to wear these shoes on our date tonight. \\
+		\hline
+		Dataset B	& Muscles, tendons, and ligaments depend upon proper joint movement to function at optimal levels. \\
+					& It is advisable to keep water levels some distance below where the tiles are to prevent any damage. \\
+					& Technological development has also contributed to long-term efficiency and productivity. \\
+		\hline
+	\end{tabular}
+	\caption{Comparison of sample sentences from Dataset A and Dataset B.}
+	\label{tab:dataset_examples}
+\end{table}
+
+I then extracted about 35.000 sentences for training and 5000 for testing from each dataset \cite{vieira2024much}, and created the final datasets used for the experiments. Since Dataset A consists of English-French pairs, I discarded the French side and kept only the English sentences.
+
+Next, using OpenAI API, I prompted GPT-5 Mini to translate all the english sentences into Italian, and saved the resulting source-target pairs in a CSV file. After completing the translations, I extracted an equal number of samples from Dataset A and Dataset B and merged the two into a new Dataset AB, which combined the two domains. I chose GPT-5 Mini in order to keep costs low; using a more advanced model such as GPT-5.2 would have increased the total cost by approximately 10 times.
+
+\subsection{Training}\label{sec2.3}
+
+\section{Results}\label{sec3}
+
+\section{Conclusions}\label{sec4}
+
+%%===========================================================================================%%
+%% If you are submitting to one of the Nature Portfolio journals, using the eJP submission   %%
+%% system, please include the references within the manuscript file itself. You may do this  %%
+%% by copying the reference list from your .bbl file, paste it into the main manuscript .tex %%
+%% file, and delete the associated \verb+\bibliography+ commands.                            %%
+%%===========================================================================================%%
+
+\bibliography{sn-bibliography}% common bib file
+%% if required, the content of .bbl file can be included here once bbl is generated
+%%\input sn-article.bbl
+
+\end{document}
