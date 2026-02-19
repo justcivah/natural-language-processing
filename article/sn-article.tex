@@ -128,15 +128,15 @@
 
 \section{Introduction}\label{sec1}
 
-In recent years, more and more cumbersome LLMs have come to life in the AI race led by OpenAI and joined by all other competitors and big techs like Google, Anthropic, and Meta, just to say some. These companies have created models with billions if not trillions of parameters \cite{abacha2025medec}, and are general purpose, which means they are capable of doing a wide range or tasks such as natural language understanding and generation, decision making, and reasoning \cite{ye2025llms4allreviewlargelanguage}.
+In recent years, more and more cumbersome LLMs have come to life in the AI race led by OpenAI and joined by all other competitors and big techs like Google, Anthropic, and Meta, just to say some. These companies have created models with billions if not trillions of parameters \cite{abacha2025medec}, and are general purpose, which means they are capable of doing a wide range of tasks such as natural language understanding and generation, decision making, and reasoning \cite{ye2025llms4allreviewlargelanguage}.
 
 The main downside of these models is also their main advantage: the size. Running inference requires expensive hardware in order to load all parameters into dedicated GPU memory. Moreover, if we want to perform a task that only uses a subset of the model capabilities, all the parameters are still active, leading to a waste of memory and computational power.
 
-In the case we only want to perform a certain task, it might be useful to condense a larger model into a smaller one, specialized on that specific task while preserving comparable performance. This process is commonly known ad distillation \cite{hinton2015distilling}, and consists in transferring knowledge from a teacher model into a smaller student model.
+In the case we only want to perform a certain task, it might be useful to condense a larger model into a smaller one, specialized on that specific task while preserving comparable performance. This process is commonly known as distillation \cite{hinton2015distilling}, and consists in transferring knowledge from a teacher model into a smaller student model.
 
 A limitation arises when the teacher model we want to use is proprietary, and internal parameters or output logits are not accessible. Using a black-box makes the distillation process more difficult, and in those scenarios alternative strategies must be considered. One of them is training the student using only teacher's predictions; in this way we are still able to train the smaller model, but a reduction in performance is expected compared to full logits distillation \cite{yang2025survey}.
 
-In this paper, we investigate the distillation of task-specific student models from a GPT-5 Mini teacher using only its output predictions. We test two different student architectures across multiple parameter counts in order to assess their performance under domain shift. The models are trained on English-to-Italian translation and evaluated using BLEU and chrF++ metrics to measure both in-domain and out-of-domain effectiveness. Many more metrics like COMET and TER exists, but in order to keep thinks simple I decided to focus only on those two.
+In this paper, we investigate the distillation of task-specific student models from a GPT-5 Mini teacher using only its output predictions. We test two different student architectures across multiple parameter counts in order to assess their performance under domain shift. The models are trained on English-to-Italian translation and evaluated using BLEU and chrF++ metrics to measure both in-domain and out-of-domain effectiveness. Many more metrics like COMET and TER exists, but in order to keep things simple I decided to focus only on those two.
 
 \section{Methodology}\label{sec2}
 
@@ -178,7 +178,7 @@ Since GPT-5 Mini translations are used as reference labels, the evaluation metri
 
 The model architectures decided to be used as students come from Google T5-Efficient and mT5 families \cite{tay2021scale}. These models come with different parameter count, and are pretrained with the Colossal, Cleaned Common Crawl Dataset \cite{commoncrawl}. The T5 family model and tokenizer are pretrained using only English sentences, while mT5 models are multilingual and support 101 different languages, Italian included.
 
-For this study, both T5 and mT5 variants were tested in order to investigate wether a multilingual model have advantages on cross-lingual knowledge distillation, or if monolingual models with proper finetuning can also achieve similar performance on Italian translation tasks.
+For this study, both T5 and mT5 variants were tested in order to investigate whether a multilingual model has advantages on cross-lingual knowledge distillation, or if monolingual models with proper finetuning can also achieve similar performance on Italian translation tasks.
 
 In particular, the models used for these experiments are T5-Efficient-Small, T5-Efficient-Base, mT5-Small, and mT5-Base. The parameter count of each model is shown in Table~\ref{tab:parameter_count}.
 
@@ -187,7 +187,7 @@ In particular, the models used for these experiments are T5-Efficient-Small, T5-
 	\renewcommand{\arraystretch}{1.5}
 	\begin{tabular}{p{0.30\textwidth} p{0.20\textwidth}}
 		\hline
-		\textbf{Name} & \textbf{Parameter } \\
+		\textbf{Name} & \textbf{Parameters } \\
 		\hline
 		T5-Efficient-Small & 60M \\
 		T5-Efficient-Base & 220M \\
@@ -203,7 +203,7 @@ In particular, the models used for these experiments are T5-Efficient-Small, T5-
 
 Each model listed in Table~\ref{tab:parameter_count} was fine-tuned on the three different datasets resulting in three variants per base model: Student A, Student B, and Student AB.
 
-In total, 12 models were fine-tuned for 30 epochs on a machine provided by the MIPS Laboratory, equipped with an NVIDIA 3090 (24GB), an Intel i9-12900K, and 64GB of system RAM. All models were trained using 16 bits floating point, batches of size 16, a learning rate of 2e-5, and chrF++ as metric for evaluating the best model. For a more specific hyperparameter configuration, see code in \texttt{train\_student.py}. The training of all 12 models took about two days. 
+In total, 12 models were fine-tuned for 30 epochs on a machine provided by the MIPS Laboratory, equipped with an NVIDIA 3090 (24GB), an Intel i9-12900K, and 64GB of system RAM. All models were trained using FP16 precision, batches of size 16, a learning rate of 2e-5, and chrF++ as metric for evaluating the best model. For a more specific hyperparameter configuration, see code in \texttt{train\_student.py}. The training of all 12 models took about two days. 
 
 \section{Results}\label{sec3}
 
@@ -329,7 +329,7 @@ Despite being pretrained exclusively on English text, T5-Efficient models demons
 
 In this work we have discussed the distillation of a student given a black-box teacher in case of translations from English to Italian, and analyzed how domain shift may affect distilled models in two different domains.
 
-These results shows that parameter count is the main indicator of translation quality, with mT5-Base constantly outperforming all other models across all domains. Furthermore, multilingual pretraining gives an advantage over monolingual counterparts, even though some monolingual model have achieved similar performances after finetuning, suggesting that multilingual is beneficial but not a strict necessity when sufficient task specific supervision is available.
+These results show that parameter count is the main indicator of translation quality, with mT5-Base constantly outperforming all other models across all domains. Furthermore, multilingual pretraining gives an advantage over monolingual counterparts, even though some monolingual models have achieved similar performances after finetuning, suggesting that multilingual is beneficial but not a strict necessity when sufficient task specific supervision is available.
 
 We also found out that domain shift is a significant challenge across all models. When a model was trained on a specific domain, performances on the other one dropped. The only solution to this problem is training students with less data but coming from both domains. That mitigates the issue by achieving a balanced performance across all domains, at the cost of an overall modest reduction in scores.
 
@@ -337,7 +337,7 @@ Since student models are trained to reproduce teacher translations, and the eval
 
 \bmhead{Acknowledgements}
 
-The development of this project and paper was supported by AI models, including GPT-5.2 and Claude 3.5 Sonnet. These tools were used to assist with clarifying ideas, refining english phrasing, understanding certain PyTorch concepts, and generating plots. The author takes full responsibility for the integrity of the work.
+The development of this project and paper was supported by AI models, including GPT-5.2 and Claude 3.5 Sonnet. These tools were used to assist with clarifying ideas, refining English phrasing, understanding certain PyTorch concepts, and generating plots. The author takes full responsibility for the integrity of the work.
 
 %%===========================================================================================%%
 %% If you are submitting to one of the Nature Portfolio journals, using the eJP submission   %%
